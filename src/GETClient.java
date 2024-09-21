@@ -1,3 +1,18 @@
+/*
+Sends GET requests to the aggregation server, receives the response, and prints it.
+
+- client contacts aggregation server through RESTful API
+- can have multiple clients
+- displays the received data
+- starts up, reads command line for server name, port number (url format) and optional station ID
+- send GET req to Ag server for weather data
+- data stripped of JSON format, and displayed one at a time with attribute and value
+- main method
+- Possible formats for the server name and port number include "http://servername.domain.domain:portnumber", "http://servername:portnumber" (with implicit domain information) and "servername:portnumber" (with implicit domain and protocol information).
+- output does not need hyperlinks
+- maintains a lamport clock
+ */
+
 import java.io.*;
 import java.net.*;
 

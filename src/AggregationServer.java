@@ -1,3 +1,24 @@
+/*
+AggregationServer.java: Manages incoming GET and PUT requests.
+It uses the Lamport Clock to track the order of requests and stores data in a dataStore.
+JSON data is parsed using Gson.
+
+- Checks data
+- distributes to clients as they request it
+- accepts updates from content servers
+- stores data persistently until content server no longer in contact, or has not been in contact for 30 seconds
+- can have multiple clients sent GET requests
+- removes content from server that has not been updated in 30 sec (be efficient)
+- when storage file is created, returns '201-HTTP_CREATED'
+- when updates, returns '200' if unsuccessful, '201' if successful
+- any request other than GET and PUT returns '400'
+- sending no content to server returns '204'
+- incorrect JSON returns '500'
+- default port is 4567, but accepts single command line arg for port number
+- contains the ag server's main method
+- maintains a lamport clock
+ */
+
 import java.io.*;
 import java.net.*;
 
@@ -27,7 +48,7 @@ public class AggregationServer {
                                     "Content-Type: text/plain\r\n" + // Content type header
                                     "Connection: close\r\n" + // Connection header
                                     "\r\n" + // End of headers
-                                    "Hello, Client! This is the server's response."; // Body content
+                                    "Hello! This is the server's response."; // Body content
 
                     out.print(httpResponse);
                     out.flush(); // Ensure the response is sent

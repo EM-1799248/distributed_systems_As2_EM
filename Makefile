@@ -1,4 +1,4 @@
-SOURCES = src/AggregationServer.java src/GETClient.java
+SOURCES = src/AggregationServer.java src/ContentServer.java src/GETClient.java
 
 # Default target: compile everything automatically
 all: bin compile
@@ -17,3 +17,6 @@ run-server:
 
 run-client:
 	cd bin && java GETClient http://localhost: 4567
+
+run-content:
+	cd bin && java ContentServer http://localhost: 4567
