@@ -43,7 +43,7 @@ public class ContentServer {
                     "Host: " + SERVER_ADDRESS + "\r\n" +
                     "Content-Type: application/json\r\n" +
                     "Content-Length: " + jsonData.length() + "\r\n" +
-                    "Lamport-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
+                    "Content-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
                     "Connection: close\r\n\r\n" +
                     jsonData;
 
@@ -56,7 +56,7 @@ public class ContentServer {
             int receivedClock = -1;
             while ((responseLine = in.readLine()) != null) {
                 System.out.println("Server Response: " + responseLine);
-                if (responseLine.startsWith("Lamport-Clock:")) {
+                if (responseLine.contains("Clock") || responseLine.contains("Time")) {
                     receivedClock = Integer.parseInt(responseLine.split(": ")[1]);  // Extract the received Lamport clock value
                 }
             }

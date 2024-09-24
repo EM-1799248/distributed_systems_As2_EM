@@ -41,7 +41,7 @@ public class GETClient {
                     "GET / HTTP/1.1\r\n" + // Request method and resource path
                             "Host: localhost\r\n" + // Host header, required in HTTP/1.1
                             "Connection: close\r\n" + // Indicate to close connection after response
-                            "Lamport-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
+                            "Client-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
                             "\r\n"; // Empty line to indicate end of headers
 
             // Send the HTTP request to the server
@@ -66,7 +66,7 @@ public class GETClient {
             // Read headers and print them (optional)
             String header;
             int receivedClock = -1;
-            while (!(header = in.readLine()).isEmpty()) {
+            while (!(header = in.readLine()).isEmpty() || !(in.readLine()==null)) {
                 System.out.println(header);
                 if (header.startsWith("Lamport-Clock:")) {
                     receivedClock = Integer.parseInt(header.split(": ")[1]);

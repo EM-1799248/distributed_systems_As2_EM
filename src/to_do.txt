@@ -7,17 +7,17 @@ Sunday 22:
 [x] get the content server to send PUT requests to Aggregation server
 [x] update Ag server to handle and differentiate between get and put requests
 [x] make helper function that sends response
-[] link data.txt to getclient
+[x] link data.txt to getclient
 
 Monday 23:
-[] get client to read response
+[x] get client to read response
 [] get client to print out received data
-[] implement json parser
+[x] implement json parser
 
 Tuesday 24:
 [] create hash map (stationID key for data)
-[] implement lamport clock class
-[] integrate clock into ag server, content server, and client
+[x] implement lamport clock class
+[x] integrate clock into ag server, content server, and client
 
 Wednesday 25:
 [] implement 30s clearing criterion
