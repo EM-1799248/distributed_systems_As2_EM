@@ -4,9 +4,9 @@ Saturday 21:
 
 Sunday 22:
 [x] implement basic content server that can communicate with Ag server
-[] get the content server to send PUT requests to Aggregation server
-[] update Ag server to handle and differentiate between get and put requests
-[] make helper function that sends response
+[x] get the content server to send PUT requests to Aggregation server
+[x] update Ag server to handle and differentiate between get and put requests
+[x] make helper function that sends response
 [] link data.txt to getclient
 
 Monday 23:

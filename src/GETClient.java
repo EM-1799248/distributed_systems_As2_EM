@@ -13,23 +13,35 @@ Sends GET requests to the aggregation server, receives the response, and prints 
 - maintains a lamport clock
  */
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.*;
 import java.net.*;
+import java.util.Map;
 
 public class GETClient {
     private static final String SERVER_ADDRESS = "localhost";
     private static final int SERVER_PORT = 4567;
+    private static LamportClock clientLamportClock = new LamportClock();  // Initialize Lamport clock
 
     public static void main(String[] args) {
+
         try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            // Increment the Lamport clock before sending the PUT request
+            clientLamportClock.tick();
+            int currentClock = clientLamportClock.getTime();
 
             // Building the HTTP GET request string
             String httpRequest =
                     "GET / HTTP/1.1\r\n" + // Request method and resource path
                             "Host: localhost\r\n" + // Host header, required in HTTP/1.1
                             "Connection: close\r\n" + // Indicate to close connection after response
+                            "Lamport-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
                             "\r\n"; // Empty line to indicate end of headers
 
             // Send the HTTP request to the server
@@ -40,10 +52,55 @@ public class GETClient {
             String responseLine;
             while ((responseLine = in.readLine()) != null) {
                 System.out.println("Response: " + responseLine);
+
+                // Check if the response line is empty to avoid NullPointerException
+                if (responseLine.isEmpty()) {
+                    break; // Exit the loop when an empty line is encountered
+                }
+            }
+
+            // Read response status line
+            String statusLine = in.readLine();
+            System.out.println("Server Response: " + statusLine);
+
+            // Read headers and print them (optional)
+            String header;
+            int receivedClock = -1;
+            while (!(header = in.readLine()).isEmpty()) {
+                System.out.println(header);
+                if (header.startsWith("Lamport-Clock:")) {
+                    receivedClock = Integer.parseInt(header.split(": ")[1]);
+                }
+            }
+            clientLamportClock.update(receivedClock);
+
+            // Read the JSON response body
+            StringBuilder jsonResponse = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                jsonResponse.append(line);
+            }
+
+            // Parse JSON data
+            Gson gson = new Gson();
+//            Map<String, String> data = gson.fromJson(jsonResponse.toString(), new TypeToken<Map<String, String>>() {}.getType());
+            JsonObject jsonObject = gson.fromJson(String.valueOf(jsonResponse), JsonObject.class);
+
+
+            // Print the data line by line
+            if (jsonObject != null) {
+//                for (Map.Entry<String, String> entry : data.entrySet()) {
+//                    System.out.println(entry.getKey() + ": " + entry.getValue());
+//                }
+                for (String key : jsonObject.keySet()) {
+                    System.out.println(key + ": " + jsonObject.get(key).getAsString());
+                }
+            } else {
+                System.out.println("No data received.");
             }
 
         } catch (IOException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Client Error: " + e.getMessage());
             e.printStackTrace();
         }
     }

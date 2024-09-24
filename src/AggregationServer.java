@@ -19,40 +19,30 @@ JSON data is parsed using Gson.
 - maintains a lamport clock
  */
 
+import com.google.gson.Gson;
+
 import java.io.*;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 public class AggregationServer {
     private static final int PORT = 4567;
+    private static final LamportClock clock = new LamportClock();
+
+    // In-memory data store to hold the updated data
+    private static Map<String, String> localData = new HashMap<>();
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server started and listening on port " + PORT);
 
             while (true) {
-                try (Socket clientSocket = serverSocket.accept();
-                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
-
-                    System.out.println("Client connected: " + clientSocket.getInetAddress());
-
-                    // Read and print the HTTP request
-                    String requestLine;
-                    while ((requestLine = in.readLine()) != null && !requestLine.isEmpty()) {
-                        System.out.println("Received: " + requestLine);
-                    }
-
-                    // Send a basic HTTP response back to the client
-                    String httpResponse =
-                            "HTTP/1.1 200 OK\r\n" + // Response status line
-                                    "Content-Type: text/plain\r\n" + // Content type header
-                                    "Connection: close\r\n" + // Connection header
-                                    "\r\n" + // End of headers
-                                    "Hello! This is the server's response."; // Body content
-
-                    out.print(httpResponse);
-                    out.flush(); // Ensure the response is sent
-
+                try (Socket clientSocket = serverSocket.accept()) {
+                    handleClient(clientSocket);
                 } catch (IOException e) {
                     System.err.println("Error handling client connection: " + e.getMessage());
                 }
@@ -62,4 +52,118 @@ public class AggregationServer {
             e.printStackTrace();
         }
     }
+
+    private static void handleClient(Socket clientSocket) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+//        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+        OutputStream out = clientSocket.getOutputStream();
+
+        System.out.println("Entity connected: " + clientSocket.getInetAddress());
+
+        // Read the first line of the HTTP request to check the request type
+        String requestLine = in.readLine();
+
+        if (requestLine != null && !requestLine.isEmpty()) {
+            System.out.println("Received: " + requestLine);
+
+            // Check for the type of request (GET/PUT)
+            if (requestLine.contains("GET")) {
+                handleGetRequest(out);
+            } else if (requestLine.contains("PUT")) {
+                handlePutRequest(in, out);
+            } else {
+                sendResponse(out, "400 Bad Request", "Invalid request type", -1);
+            }
+        } else {
+            // Handle null or empty request line, possibly returning a bad request
+            sendResponse(out, "400 Bad Request", "Empty request line", -1);
+        }
+    }
+
+    private static void handleGetRequest(OutputStream out) throws IOException{
+        clock.tick(); // Lamport Clock tick for GET
+
+        // Convert localData to JSON format
+        Gson gson = new Gson();
+        String jsonResponse = gson.toJson(localData);
+
+        sendResponse(out, "200 OK", jsonResponse, clock.getTime());
+    }
+
+    private static void handlePutRequest(BufferedReader in, OutputStream out) throws IOException{
+        clock.tick(); // Lamport Clock tick for GET
+        int receivedClock = -1;
+
+        sendResponse(out, "200 OK", "PUT jsonResponse", clock.getTime());
+
+        String contentLengthHeader = "";
+        int contentLength = 0;
+
+        // Read the headers
+        String headerLine;
+        while (!(headerLine = in.readLine()).isEmpty()) {
+            System.out.println("Header: " + headerLine);
+            if (headerLine.startsWith("Content-Length:")) {
+                contentLengthHeader = headerLine;
+            } else if (headerLine.startsWith("Lamport-Clock:")) {
+                // Extract the Lamport clock value from the request headers
+                receivedClock = Integer.parseInt(headerLine.split(": ")[1]);
+            }
+        }
+
+        // Update the local Lamport Clock with the received clock
+        if (receivedClock != -1) {
+            clock.update(receivedClock);
+        }
+
+        // Extract the Content-Length value
+        if (!contentLengthHeader.isEmpty()) {
+            contentLength = Integer.parseInt(contentLengthHeader.split(":")[1].trim());
+        }
+
+        // Read the JSON payload
+        char[] content = new char[contentLength];
+        in.read(content, 0, contentLength);
+        String jsonData = new String(content);
+
+        // Parse the JSON data using TypeToken for type safety
+        Gson gson = new Gson();
+        Type mapType = new TypeToken<Map<String, String>>(){}.getType();
+        Map<String, String> data = gson.fromJson(jsonData, mapType);
+
+        // Write the received data to the local file
+        updateLocalData(data);
+
+        // Send a success response
+        sendResponse(out, "201 Created", "Data successfully updated", -1);
+    }
+
+    private static void sendResponse(OutputStream out, String status, String message, int time) throws IOException {
+        String response = "HTTP/1.1 " + status + "\r\n" +
+                "Time: " + time + "\r\n" +
+                "Content-Length: " + message.length() + "\r\n" +
+                "\r\n" +
+                message;
+        out.write(response.getBytes());
+        out.flush(); // Ensure the response is sent immediately
+    }
+
+    // Method to write the updated data to a local file
+    private static void updateLocalData(Map<String, String> data) throws IOException {
+        localData.putAll(data);
+        System.out.println("Local data updated successfully.");
+    }
+
+
+
+//            // Send a basic HTTP response back to the client
+//            String httpResponse =
+//                    "HTTP/1.1 200 OK\r\n" + // Response status line
+//                            "Content-Type: text/plain\r\n" + // Content type header
+//                            "Connection: close\r\n" + // Connection header
+//                            "\r\n" + // End of headers
+//                            "Hello! This is the server's response."; // Body content
+//
+//            out.print(httpResponse);
+//            out.flush(); // Ensure the response is sent
 }
