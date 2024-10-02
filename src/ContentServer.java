@@ -8,10 +8,14 @@ Reads data from a local file, converts it into JSON using Gson, and sends it to 
  */
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ContentServer {
@@ -25,6 +29,7 @@ public class ContentServer {
 
         // Read the file
         String filePath = "data.txt";
+//        List<String[]> data = readDataFile(filePath);
         Map<String, String> data = readDataFile(filePath);
 
         // Convert the data to JSON
@@ -43,7 +48,7 @@ public class ContentServer {
                     "Host: " + SERVER_ADDRESS + "\r\n" +
                     "Content-Type: application/json\r\n" +
                     "Content-Length: " + jsonData.length() + "\r\n" +
-                    "Content-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
+                    "Lamport-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
                     "Connection: close\r\n\r\n" +
                     jsonData;
 
@@ -56,7 +61,7 @@ public class ContentServer {
             int receivedClock = -1;
             while ((responseLine = in.readLine()) != null) {
                 System.out.println("Server Response: " + responseLine);
-                if (responseLine.contains("Clock") || responseLine.contains("Time")) {
+                if (responseLine.startsWith("Lamport-Clock")) {
                     receivedClock = Integer.parseInt(responseLine.split(": ")[1]);  // Extract the received Lamport clock value
                 }
             }
@@ -73,13 +78,21 @@ public class ContentServer {
 
     // Method to convert the map to a JSON string
     public static String convertToJSON(Map<String, String> data) {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().create();
         return gson.toJson(data);
     }
 
+//    public static String convertToJSON(List<String[]> data) {
+//        JsonObject jsonObject = new JsonObject();
+//        for (String[] entry : data) {
+//            jsonObject.addProperty(entry[0], entry[1]);
+//        }
+//        return jsonObject.toString();
+//    }
+
     // Method to read data.txt and parse it into a map
     public static Map<String, String> readDataFile(String filePath) throws IOException {
-        Map<String, String> data = new HashMap<>();
+        Map<String, String> data = new LinkedHashMap<>();
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
         String line;
 
@@ -92,4 +105,19 @@ public class ContentServer {
         reader.close();
         return data;
     }
+
+//    public static List<String[]> readDataFile(String filePath) throws IOException {
+//        List<String[]> data = new ArrayList<>();
+//        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+//        String line;
+//
+//        while ((line = reader.readLine()) != null) {
+//            String[] parts = line.split(":");
+//            if (parts.length == 2) {
+//                data.add(new String[]{parts[0], parts[1].trim()});
+//            }
+//        }
+//        reader.close();
+//        return data;
+//    }
 }

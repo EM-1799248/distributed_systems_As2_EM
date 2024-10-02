@@ -41,50 +41,109 @@ public class GETClient {
                     "GET / HTTP/1.1\r\n" + // Request method and resource path
                             "Host: localhost\r\n" + // Host header, required in HTTP/1.1
                             "Connection: close\r\n" + // Indicate to close connection after response
-                            "Client-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
+                            "Lamport-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
                             "\r\n"; // Empty line to indicate end of headers
 
             // Send the HTTP request to the server
             out.print(httpRequest);
             out.flush(); // Ensure all data is sent to the server
 
+
+
+
+
+
+
+
+
+
+
+
+            // Accumulate the entire server response
+            StringBuilder fullResponse = new StringBuilder();
+            String responseLine;
+            int receivedClock = -1;
+
+            while ((responseLine = in.readLine()) != null) {
+                fullResponse.append(responseLine).append("\n");  // Append each line to the full response
+
+                // Check for Lamport-Clock header
+                if (responseLine.startsWith("Lamport-Clock:")) {
+                    receivedClock = Integer.parseInt(responseLine.split(": ")[1]);
+                }
+            }
+
+            // Print the full raw response immediately for comparison
+            System.out.println("Full Raw Server Response:");
+            System.out.println(fullResponse.toString());
+
+            // Update the client Lamport clock
+            clientLamportClock.update(receivedClock);
+
+            // Extract JSON from the response body (assuming it's after the headers)
+            String jsonResponse = fullResponse.substring(fullResponse.indexOf("{"));  // Find and extract the JSON portion
+
+            // Parse JSON data
+            Gson gson = new Gson();
+            JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+
+
+
+
+
+
+
+
+
+
+
+            /*
+
             // Read the response from the server
             String responseLine;
-            while ((responseLine = in.readLine()) != null) {
-                System.out.println("Response: " + responseLine);
-
-                // Check if the response line is empty to avoid NullPointerException
-                if (responseLine.isEmpty()) {
-                    break; // Exit the loop when an empty line is encountered
-                }
-            }
-
-            // Read response status line
-            String statusLine = in.readLine();
-            System.out.println("Server Response: " + statusLine);
-
-            // Read headers and print them (optional)
-            String header;
             int receivedClock = -1;
-            while (!(header = in.readLine()).isEmpty() || !(in.readLine()==null)) {
-                System.out.println(header);
-                if (header.startsWith("Lamport-Clock:")) {
-                    receivedClock = Integer.parseInt(header.split(": ")[1]);
+            while ((responseLine = in.readLine()) != null) {
+                if (!responseLine.isEmpty()) {
+                    System.out.println("Server Response: " + responseLine);
+                    if (responseLine.startsWith("Lamport-Clock:")) {
+                        receivedClock = Integer.parseInt(responseLine.split(": ")[1]);
+                    }
                 }
             }
+
+//            // Read response status line
+//            String statusLine = in.readLine();
+//            System.out.println("Server Response: " + statusLine);
+//
+//            // print
+//            String line;
+//            int receivedClock = -1;
+//            while ((line = in.readLine()) != null) {
+//                if (!line.isEmpty()) {
+//                    System.out.println("Server Response: " + line);
+//                    if (line.startsWith("Lamport-Clock:")) {
+//                        receivedClock = Integer.parseInt(line.split(": ")[1]);
+//                    }
+//                }
+//            }
+
+            // update clock
             clientLamportClock.update(receivedClock);
 
             // Read the JSON response body
             StringBuilder jsonResponse = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) {
-                jsonResponse.append(line);
+            String jsonLine;
+            while ((jsonLine = in.readLine()) != null) {
+                jsonResponse.append(jsonLine);
             }
 
             // Parse JSON data
             Gson gson = new Gson();
 //            Map<String, String> data = gson.fromJson(jsonResponse.toString(), new TypeToken<Map<String, String>>() {}.getType());
             JsonObject jsonObject = gson.fromJson(String.valueOf(jsonResponse), JsonObject.class);
+
+             */
+
 
 
             // Print the data line by line

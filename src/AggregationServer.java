@@ -24,8 +24,12 @@ import com.google.gson.Gson;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
@@ -35,6 +39,7 @@ public class AggregationServer {
 
     // In-memory data store to hold the updated data
     private static Map<String, String> localData = new HashMap<>();
+//    private static List<String[]> localData = new ArrayList<>();
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -80,17 +85,18 @@ public class AggregationServer {
         }
     }
 
-    private static void handleGetRequest(OutputStream out) throws IOException{
+    private static void handleGetRequest(OutputStream out) throws IOException {
         clock.tick(); // Lamport Clock tick for GET
 
         // Convert localData to JSON format
         Gson gson = new Gson();
         String jsonResponse = gson.toJson(localData);
+//        String jsonResponse = gson.toJson(convertListToJsonObject(localData));
 
         sendResponse(out, "200 OK", jsonResponse, clock.getTime());
     }
 
-    private static void handlePutRequest(BufferedReader in, OutputStream out) throws IOException{
+    private static void handlePutRequest(BufferedReader in, OutputStream out) throws IOException {
         clock.tick(); // Lamport Clock tick for GET
         int receivedClock = -1;
 
@@ -128,19 +134,23 @@ public class AggregationServer {
 
         // Parse the JSON data using TypeToken for type safety
         Gson gson = new Gson();
-        Type mapType = new TypeToken<Map<String, String>>(){}.getType();
+        Type mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
         Map<String, String> data = gson.fromJson(jsonData, mapType);
+//        Type listType = new TypeToken<List<String[]>>() {}.getType();
+//        List<String[]> data = gson.fromJson(jsonData, listType);
 
         // Write the received data to the local file
         updateLocalData(data);
 
         // Send a success response
-        sendResponse(out, "201 Created", "Data successfully updated", -1);
+        clock.tick();
+        sendResponse(out, "201 Created", "Data successfully updated", clock.getTime());
     }
 
     private static void sendResponse(OutputStream out, String status, String message, int time) throws IOException {
         String response = "HTTP/1.1 " + status + "\r\n" +
-                "Time: " + time + "\r\n" +
+                "Lamport-Clock: " + time + "\r\n" +
                 "Content-Length: " + message.length() + "\r\n" +
                 "\r\n" +
                 message;
@@ -153,7 +163,22 @@ public class AggregationServer {
         localData.putAll(data);
         System.out.println("Local data updated successfully.");
     }
+//    private static void updateLocalData(List<String[]> data) { // throws IOException {
+//        localData.clear(); // Clear existing data if needed
+//        localData.addAll(data); // Add all new entries to the list
+//        System.out.println("Local data updated successfully.");
+//    }
 
+    private static JsonObject convertListToJsonObject(List<String[]> data) {
+        JsonObject jsonObject = new JsonObject();
+        for (String[] entry : data) {
+            if (entry.length == 2) {
+                jsonObject.addProperty(entry[0], entry[1]);
+            }
+        }
+        return jsonObject;
+    }
+}
 
 
 //            // Send a basic HTTP response back to the client
@@ -166,4 +191,4 @@ public class AggregationServer {
 //
 //            out.print(httpResponse);
 //            out.flush(); // Ensure the response is sent
-}
+//
