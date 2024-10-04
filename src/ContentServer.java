@@ -38,7 +38,6 @@ public class ContentServer {
 
         // Read the file
         String filePath = "data.txt";
-//        List<String[]> data = readDataFile(filePath);
         Map<String, String> data = readDataFile(filePath);
 
         // Convert the data to JSON
@@ -57,7 +56,7 @@ public class ContentServer {
                     "Host: " + SERVER_ADDRESS + "\r\n" +
                     "Content-Type: application/json\r\n" +
                     "Content-Length: " + jsonData.length() + "\r\n" +
-                    "Lamport-Clock: " + currentClock + "\r\n" +  // Send the Lamport clock with the request
+                    "Lamport-Clock: " + currentClock + "\r\n" +
                     "Connection: close\r\n\r\n" +
                     jsonData;
 
@@ -71,7 +70,7 @@ public class ContentServer {
             while ((responseLine = in.readLine()) != null) {
                 System.out.println("Server Response: " + responseLine);
                 if (responseLine.startsWith("Lamport-Clock")) {
-                    receivedClock = Integer.parseInt(responseLine.split(": ")[1]);  // Extract the received Lamport clock value
+                    receivedClock = Integer.parseInt(responseLine.split(": ")[1]);
                 }
             }
 

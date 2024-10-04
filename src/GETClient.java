@@ -26,7 +26,7 @@ public class GETClient {
 
     public static void main(String[] args) {
 
-        int SERVER_PORT = DEFAULT_PORT; // initialise server port as the default port
+        int SERVER_PORT = DEFAULT_PORT; // Initialise server port as the default port
         String SERVER_ADDRESS = DEFAULT_SERVER;
 
         try {
@@ -37,7 +37,6 @@ public class GETClient {
                 SERVER_PORT = Integer.parseInt(serverDetails[1]);
             }
 
-//            System.out.println("Opened on port: " + SERVER_PORT);
             System.out.println("Connecting to server: " + SERVER_ADDRESS + " on port: " + SERVER_PORT);
 
         } catch (IllegalArgumentException e) {
@@ -97,9 +96,6 @@ public class GETClient {
 
             // Print the data line by line
             if (jsonObject != null) {
-//                for (Map.Entry<String, String> entry : data.entrySet()) {
-//                    System.out.println(entry.getKey() + ": " + entry.getValue());
-//                }
                 for (String key : jsonObject.keySet()) {
                     System.out.println(key + ": " + jsonObject.get(key).getAsString());
                 }
@@ -120,7 +116,7 @@ public class GETClient {
         // Trim input to remove any leading/trailing whitespace
         input = input.trim();
 
-        // Remove "http://" or "https://" prefix if present
+        // Remove prefix if present
         if (input.startsWith("http://")) {
             input = input.substring(7);
         } else if (input.startsWith("https://")) {

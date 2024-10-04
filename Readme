@@ -75,6 +75,8 @@ Things partially implemented
 I tried many different ways to get it to order correctly, to no avail. All the values match their key, but the order is incorrect.
 - Various input formats with server address and/or port or default
     - I got it working for some (see the examples in the makefile instructions above) but not for the ones where domain is possible inclusion.
+- Technically, when you compile make all, as I'm sure you saw / will see, It gets the Note "src/ContentServer.java uses or overrides a deprecated API." This has to do with the URL in "URL url = new URL(args[0]);" from ContentServer.java line 29.
+    - I tried to find an alternate method but was clearly unable to find one that worked (each one had errors so I couldn't compile).
 
 Thing I was unfortunately not able to implement
 - StationID arg

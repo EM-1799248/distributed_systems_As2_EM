@@ -42,7 +42,6 @@ public class AggregationServer {
 
     // In-memory data store to hold the updated data
     private static Map<String, String> localData = new HashMap<>();
-//    private static List<String[]> localData = new ArrayList<>();
 
     public static void main(String[] args) {
         // Get the port from command-line arguments or use default
@@ -143,7 +142,7 @@ public class AggregationServer {
         Map<String, String> data = gson.fromJson(jsonData, mapType);
 
         // Check if localData is empty before updating
-        boolean wasEmpty = localData.isEmpty(); // Assuming localData is your data storage
+        boolean wasEmpty = localData.isEmpty();
 
         // Write the received data to the local file
         updateLocalData(data);
@@ -153,8 +152,10 @@ public class AggregationServer {
         // Send a success response
         clock.tick();
         if (wasEmpty) {
+            // Creating data file
             sendResponse(out, "201 Created", "Data successfully updated", clock.getTime());
         } else {
+            // Updating data file
             sendResponse(out, "200 OK", "Data successfully updated", clock.getTime());
         }
     }
@@ -175,10 +176,12 @@ public class AggregationServer {
         System.out.println("Local data updated successfully.");
     }
 
+    // Method to convert structured data from a list format into a JSON object format
     private static JsonObject convertListToJsonObject(List<String[]> data) {
         JsonObject jsonObject = new JsonObject();
-        for (String[] entry : data) {
+        for (String[] entry : data) { // Iterate through each String array in the list
             if (entry.length == 2) {
+                // Add the first element as a key and the second as its value in the JsonObject
                 jsonObject.addProperty(entry[0], entry[1]);
             }
         }
