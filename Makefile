@@ -1,6 +1,6 @@
 SOURCES = src/AggregationServer.java src/ContentServer.java src/GETClient.java src/LamportClock.java
 TEST_SOURCES = src/GETClientTest.java src/ContentServerTest.java src/LamportClockTest.java src/AggregationServerTest.java
-DATAFILE = src/data.txt
+DATAFILES = src/data.txt src/testData.txt
 GSON_LIB = .idea/libraries/gson-2.11.0.jar
 JUNIT_LIB = .idea/libraries/junit-4.12.jar
 HAMCREST_LIB = .idea/libraries/hamcrest-core-1.3.jar
@@ -20,7 +20,7 @@ compile:
 
 # Copy data.txt from src to bin
 copy-data:
-	cp $(DATAFILE) bin/
+	cp $(DATAFILES) bin/
 
 # Make command to run the Aggregation Server
 run-server:

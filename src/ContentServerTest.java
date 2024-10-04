@@ -41,7 +41,7 @@ public class ContentServerTest {
 
         // Read the test data file
         Map<String, String> actualData = contentServer.readDataFile(testFilePath);
-        System.out.println(actualData);
+        System.out.println(actualData); // Print stream of data
 
         // Assert that the actual data matches the expected data
         assertEquals("IDS60901", actualData.get("id"));
