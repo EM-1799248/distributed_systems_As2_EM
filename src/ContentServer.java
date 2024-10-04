@@ -9,23 +9,32 @@ Reads data from a local file, converts it into JSON using Gson, and sends it to 
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ContentServer {
     private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 4567;
-    private static LamportClock contentLamportClock = new LamportClock();  // Initialize Lamport clock
+    private static final int DEFAULT_PORT = 4567;
+    private static final LamportClock contentLamportClock = new LamportClock();  // Initialize Lamport clock
 
     public static void main(String[] args) throws IOException {
-        // Sample JSON data to send in the PUT request
-//        String jsonData = "{ \"id\": 1, \"name\": \"Weather Data\", \"temperature\": \"25.6\", \"humidity\": \"40\" }";
+        int SERVER_PORT = DEFAULT_PORT; // Initialise server port as the default port
+
+        try {
+            if (args.length > 0) {
+                // Extract port number from the URL provided in the arguments
+                URL url = new URL(args[0]);
+                SERVER_PORT = url.getPort();  // Extract the port number from the URL
+            }
+            System.out.println("Opened on port: " + SERVER_PORT);
+
+        } catch (MalformedURLException e) {
+            System.err.println("Invalid URL format: " + args[0]);
+            e.printStackTrace();
+        }
 
         // Read the file
         String filePath = "data.txt";
@@ -82,14 +91,6 @@ public class ContentServer {
         return gson.toJson(data);
     }
 
-//    public static String convertToJSON(List<String[]> data) {
-//        JsonObject jsonObject = new JsonObject();
-//        for (String[] entry : data) {
-//            jsonObject.addProperty(entry[0], entry[1]);
-//        }
-//        return jsonObject.toString();
-//    }
-
     // Method to read data.txt and parse it into a map
     public static Map<String, String> readDataFile(String filePath) throws IOException {
         Map<String, String> data = new LinkedHashMap<>();
@@ -106,18 +107,4 @@ public class ContentServer {
         return data;
     }
 
-//    public static List<String[]> readDataFile(String filePath) throws IOException {
-//        List<String[]> data = new ArrayList<>();
-//        BufferedReader reader = new BufferedReader(new FileReader(filePath));
-//        String line;
-//
-//        while ((line = reader.readLine()) != null) {
-//            String[] parts = line.split(":");
-//            if (parts.length == 2) {
-//                data.add(new String[]{parts[0], parts[1].trim()});
-//            }
-//        }
-//        reader.close();
-//        return data;
-//    }
 }
