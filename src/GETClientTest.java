@@ -7,21 +7,21 @@ import org.junit.Test;
 import com.google.gson.JsonObject;
 import java.io.*;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 
 public class GETClientTest {
     private GETClient getClient;
-    private final String testFilePath = "testData.txt"; // Adjust the path for the response file
+    private final String testFilePath = "data.txt"; // Path for the response file
     private final String serverAddress = "localhost";
     private final int serverPort = 4567;
 
     @Before
     public void setUp() throws Exception {
-        // Create a test data file for the server response
-        BufferedWriter writer = new BufferedWriter(new FileWriter(testFilePath));
-        writer.write("{\"key1\":\"value1\",\"key2\":\"value2\"}");
-        writer.close();
+        // Ensure the test data file exists with the correct content
+        // This assumes testData.txt is already created with the appropriate content
+        File testFile = new File(testFilePath);
+        if (!testFile.exists()) {
+            throw new FileNotFoundException("Test data file not found: " + testFilePath);
+        }
 
         // Initialize GETClient (constructor modification may be necessary)
         getClient = new GETClient();
