@@ -1,31 +1,81 @@
 # Instructions to run
 *Notes:*
-- requires Gson to be installed
+- Requires Gson to be installed
+- If using a custom port, make sure you use the same port number when starting all entities.
 <br>
 <br>
 <br>
 
 1. To compile all files, type the following command in a terminal.
    ``` Bash
-   make
+   make all
    ```
 
-2. Start the Aggregation Server by typing the following command in the same terminal. To exit the application, use ctrl+c.
+2. Start the Aggregation Server on the default port (4567) by typing the following command in the same terminal.
    ``` Bash
    make run-server
    ```
+   To use a custom port, type the following. X represents the port number you would like to use (valid range between 1 and 65535).
+   ``` Bash
+   make run-server PORT=X
+   ```
 
-3. Start the Content Server by typing the following command in a new terminal. To exit the application, use ctrl+c.
+3. Start the Content Server by typing the following command in a new terminal.
    ``` Bash
    make run-content
    ```
+   To use a custom port, type the following. X represents the port number you would like to use.
+      ``` Bash
+      make run-server PORT=X
+      ```
 
-4. Send a GET Request through a client by typing the following command in a new terminal. To exit the application, use ctrl+c.
+4. Send a GET Request through a client on the default address and port, type the following command in a new terminal.
    ``` Bash
    make run-client
    ```
+   To use a custom port and default address, type the following. X represents the port number you would like to use.
+      ``` Bash
+      make run-server PORT=X
+      ```
+   To use a default port and custom address, type the following. Y represents the server address in the form of "http://servername.domain.domain", "http://servername" or "servername".
+         ``` Bash
+         make run-server SERVER=Y
+         ```
+   To use a custom port and address, type the following.  Y represents the server address in the form of "http://servername.domain.domain", "http://servername" or "servername". X represents the port number you would like to use.
+         ``` Bash
+         make run-server SERVER=Y:X
+         ```
 
 5. Clean compiled files by typing the following command.
    ``` Bash
    make clean
    ```
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+*Notes:*
+- Due to many issues, both personal and with this specific assignment, I know that functionality is not 100% so I have this spiel here to provide and explanation.
+
+Things implemented
+- I believe all the codes have been put in
+- The servers communicate
+- PUT and GET work
+- The 30s clear
+- Lamport clock
+- Uncertain - if the parseServerAddress function in GETClient counts as implementing the parser bonus section.
+
+Things partially implemented
+- The response sent to the client from the ag server for some reason refuses to be printed in the order of the data.txt file.
+I tried many different ways to get it to order correctly, to no avail. All the values match their key, but the order is incorrect.
+- Various input formats with server address and/or port or default
+    - I got it working for some (see the examples in the makefile instructions above) but not for the ones where domain is possible inclusion.
+
+Thing I was unfortunately not able to implement
+- StationID arg
+- If the parseServerAddress function is not the parser in question, then I did not get to do the parser bonus part.

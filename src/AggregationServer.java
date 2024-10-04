@@ -24,26 +24,32 @@ import com.google.gson.Gson;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
+
 public class AggregationServer {
-    private static final int PORT = 4567;
+    private static final int DEFAULT_PORT = 4567;
     private static final LamportClock clock = new LamportClock();
+    private static Timer timer = new Timer();
 
     // In-memory data store to hold the updated data
     private static Map<String, String> localData = new HashMap<>();
 //    private static List<String[]> localData = new ArrayList<>();
 
     public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server started and listening on port " + PORT);
+        // Get the port from command-line arguments or use default
+        int SERVER_PORT = (args.length > 0) ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+
+        try (ServerSocket serverSocket = new ServerSocket(SERVER_PORT)) {
+            System.out.println("Server started and listening on port " + SERVER_PORT);
 
             while (true) {
                 try (Socket clientSocket = serverSocket.accept()) {
@@ -60,7 +66,6 @@ public class AggregationServer {
 
     private static void handleClient(Socket clientSocket) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-//        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
         OutputStream out = clientSocket.getOutputStream();
 
         System.out.println("Entity connected: " + clientSocket.getInetAddress());
@@ -91,7 +96,6 @@ public class AggregationServer {
         // Convert localData to JSON format
         Gson gson = new Gson();
         String jsonResponse = gson.toJson(localData);
-//        String jsonResponse = gson.toJson(convertListToJsonObject(localData));
 
         sendResponse(out, "200 OK", jsonResponse, clock.getTime());
     }
@@ -137,15 +141,22 @@ public class AggregationServer {
         Type mapType = new TypeToken<Map<String, String>>() {
         }.getType();
         Map<String, String> data = gson.fromJson(jsonData, mapType);
-//        Type listType = new TypeToken<List<String[]>>() {}.getType();
-//        List<String[]> data = gson.fromJson(jsonData, listType);
+
+        // Check if localData is empty before updating
+        boolean wasEmpty = localData.isEmpty(); // Assuming localData is your data storage
 
         // Write the received data to the local file
         updateLocalData(data);
+        // Reset the expiration timer
+        resetExpirationTimer();
 
         // Send a success response
         clock.tick();
-        sendResponse(out, "201 Created", "Data successfully updated", clock.getTime());
+        if (wasEmpty) {
+            sendResponse(out, "201 Created", "Data successfully updated", clock.getTime());
+        } else {
+            sendResponse(out, "200 OK", "Data successfully updated", clock.getTime());
+        }
     }
 
     private static void sendResponse(OutputStream out, String status, String message, int time) throws IOException {
@@ -163,11 +174,6 @@ public class AggregationServer {
         localData.putAll(data);
         System.out.println("Local data updated successfully.");
     }
-//    private static void updateLocalData(List<String[]> data) { // throws IOException {
-//        localData.clear(); // Clear existing data if needed
-//        localData.addAll(data); // Add all new entries to the list
-//        System.out.println("Local data updated successfully.");
-//    }
 
     private static JsonObject convertListToJsonObject(List<String[]> data) {
         JsonObject jsonObject = new JsonObject();
@@ -178,17 +184,27 @@ public class AggregationServer {
         }
         return jsonObject;
     }
+
+    // Resets the expiration timer after each PUT request
+    public static void resetExpirationTimer() {
+        // Cancel any existing task (if there is one)
+        timer.cancel();
+        timer = new Timer(); // Create a new Timer
+
+        // Schedule a new task to clear data after 30 seconds
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                clearData();
+            }
+        }, 30 * 1000); // 30 seconds (30 * 1000 milliseconds)
+
+        System.out.println("Expiration timer reset. Data will be cleared in 30 seconds.");
+    }
+
+    // Clear the stored data after the timer expires
+    public static void clearData() {
+        localData.clear();  // Clear the data
+        System.out.println("Data has been cleared due to expiration.");
+    }
 }
-
-
-//            // Send a basic HTTP response back to the client
-//            String httpResponse =
-//                    "HTTP/1.1 200 OK\r\n" + // Response status line
-//                            "Content-Type: text/plain\r\n" + // Content type header
-//                            "Connection: close\r\n" + // Connection header
-//                            "\r\n" + // End of headers
-//                            "Hello! This is the server's response."; // Body content
-//
-//            out.print(httpResponse);
-//            out.flush(); // Ensure the response is sent
-//
