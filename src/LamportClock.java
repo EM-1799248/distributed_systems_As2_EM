@@ -20,7 +20,6 @@ public class LamportClock {
 
     public synchronized void update(int receivedTime) {
         clock = this.clock + receivedTime + 1;
-        // clock = Math.max(this.clock, receivedTime) + 1;
     }
 
     public synchronized int getTime() {
