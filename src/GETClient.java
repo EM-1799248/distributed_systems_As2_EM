@@ -8,27 +8,46 @@ Sends GET requests to the aggregation server, receives the response, and prints 
 - send GET req to Ag server for weather data
 - data stripped of JSON format, and displayed one at a time with attribute and value
 - main method
-- Possible formats for the server name and port number include "http://servername.domain.domain:portnumber", "http://servername:portnumber" (with implicit domain information) and "servername:portnumber" (with implicit domain and protocol information).
+- Multiple possible formats for the server name and port number
 - output does not need hyperlinks
 - maintains a lamport clock
  */
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.*;
 import java.net.*;
-import java.util.Map;
 
 public class GETClient {
-    private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 4567;
-    private static LamportClock clientLamportClock = new LamportClock();  // Initialize Lamport clock
+    private static final String DEFAULT_SERVER = "localhost";
+    private static final int DEFAULT_PORT = 4567;
+    private static final LamportClock clientLamportClock = new LamportClock();  // Initialise Lamport clock
 
     public static void main(String[] args) {
 
+        int SERVER_PORT = DEFAULT_PORT; // initialise server port as the default port
+        String SERVER_ADDRESS = DEFAULT_SERVER;
+
+        try {
+            if (args.length > 0) {
+                // Parse the server address (it can include or omit the port)
+                String[] serverDetails = parseServerAddress(args[0]);
+                SERVER_ADDRESS = serverDetails[0];
+                SERVER_PORT = Integer.parseInt(serverDetails[1]);
+            }
+
+//            System.out.println("Opened on port: " + SERVER_PORT);
+            System.out.println("Connecting to server: " + SERVER_ADDRESS + " on port: " + SERVER_PORT);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error: " + e.getMessage());
+            System.out.println("400 Bad request - port does not match");
+            return;
+        }
+
         try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
@@ -47,17 +66,6 @@ public class GETClient {
             // Send the HTTP request to the server
             out.print(httpRequest);
             out.flush(); // Ensure all data is sent to the server
-
-
-
-
-
-
-
-
-
-
-
 
             // Accumulate the entire server response
             StringBuilder fullResponse = new StringBuilder();
@@ -87,65 +95,6 @@ public class GETClient {
             Gson gson = new Gson();
             JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
 
-
-
-
-
-
-
-
-
-
-
-            /*
-
-            // Read the response from the server
-            String responseLine;
-            int receivedClock = -1;
-            while ((responseLine = in.readLine()) != null) {
-                if (!responseLine.isEmpty()) {
-                    System.out.println("Server Response: " + responseLine);
-                    if (responseLine.startsWith("Lamport-Clock:")) {
-                        receivedClock = Integer.parseInt(responseLine.split(": ")[1]);
-                    }
-                }
-            }
-
-//            // Read response status line
-//            String statusLine = in.readLine();
-//            System.out.println("Server Response: " + statusLine);
-//
-//            // print
-//            String line;
-//            int receivedClock = -1;
-//            while ((line = in.readLine()) != null) {
-//                if (!line.isEmpty()) {
-//                    System.out.println("Server Response: " + line);
-//                    if (line.startsWith("Lamport-Clock:")) {
-//                        receivedClock = Integer.parseInt(line.split(": ")[1]);
-//                    }
-//                }
-//            }
-
-            // update clock
-            clientLamportClock.update(receivedClock);
-
-            // Read the JSON response body
-            StringBuilder jsonResponse = new StringBuilder();
-            String jsonLine;
-            while ((jsonLine = in.readLine()) != null) {
-                jsonResponse.append(jsonLine);
-            }
-
-            // Parse JSON data
-            Gson gson = new Gson();
-//            Map<String, String> data = gson.fromJson(jsonResponse.toString(), new TypeToken<Map<String, String>>() {}.getType());
-            JsonObject jsonObject = gson.fromJson(String.valueOf(jsonResponse), JsonObject.class);
-
-             */
-
-
-
             // Print the data line by line
             if (jsonObject != null) {
 //                for (Map.Entry<String, String> entry : data.entrySet()) {
@@ -162,5 +111,46 @@ public class GETClient {
             System.err.println("Client Error: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public static String[] parseServerAddress(String input) throws IllegalArgumentException {
+        String serverName = DEFAULT_SERVER;
+        int port = DEFAULT_PORT;
+
+        // Trim input to remove any leading/trailing whitespace
+        input = input.trim();
+
+        // Remove "http://" or "https://" prefix if present
+        if (input.startsWith("http://")) {
+            input = input.substring(7);
+        } else if (input.startsWith("https://")) {
+            input = input.substring(8);
+        }
+
+        // Check if there is a colon in the input (indicating both server and port)
+        if (input.contains(":")) {
+            // Split the input by the colon
+            String[] parts = input.split(":");
+
+            if (parts.length == 2) {
+                // If there are two parts, the first is the server name and the second is the port
+                if (!parts[0].isEmpty()) {
+                    serverName = parts[0];
+                }
+                try {
+                    port = Integer.parseInt(parts[1]);
+                    System.out.println("Server port: " + port);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid port number format.");
+                }
+            } else {
+                throw new IllegalArgumentException("Invalid server address format.");
+            }
+        } else {
+            // If there's no colon, it's just the server name with the default port
+            serverName = input;
+        }
+
+        return new String[]{serverName, String.valueOf(port)};
     }
 }
