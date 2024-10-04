@@ -15,17 +15,12 @@ public class LamportClockTest {
         int initialClock = clock.getTime();
         assertEquals(0, clock.getTime()); // Verify updated clock value
     }
+
     @Test
     public void testTick() {
         int initialClock = clock.getTime();
         clock.tick();
         assertEquals(initialClock + 1, clock.getTime()); // Verify that the clock has incremented
-    }
-
-    @Test
-    public void testGetTime() {
-        int initialClock = clock.getTime();
-        assertEquals(1, clock.getTime()); // Verify updated clock value
     }
 
     @Test

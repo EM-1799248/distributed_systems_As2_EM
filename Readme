@@ -51,6 +51,11 @@
    make clean
    ```
 
+6. To run the tests, make sure you run `make clean` before and after typing the following.
+    ``` Bash
+    make tests
+    ```
+
 
 <br>
 <br>

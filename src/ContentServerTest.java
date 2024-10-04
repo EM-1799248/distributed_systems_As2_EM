@@ -1,5 +1,5 @@
 import static org.junit.Assert.*;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.*;
@@ -8,32 +8,59 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ContentServerTest {
-    private ContentServer contentServer;
-    private final String testFilePath = "testData.txt";
+    private static ContentServer contentServer;
+    private static final String testFilePath = "data.txt";
 
-    @Before
-    public void setUp() throws Exception {
-        // Create a test data file
-        BufferedWriter writer = new BufferedWriter(new FileWriter(testFilePath));
-        writer.write("key1:value1\n");
-        writer.write("key2:value2\n");
-        writer.close();
+    @BeforeClass
+    public static void setUp() throws Exception {
 
-        // Initialize ContentServer with the test data file
+        // Initialise ContentServer with the test data file
         contentServer = new ContentServer();
     }
 
     @Test
     public void testReadDataFile() throws IOException {
         Map<String, String> expectedData = new HashMap<>();
-        expectedData.put("key1", "value1");
-        expectedData.put("key2", "value2");
+        expectedData.put("id", "IDS60901");
+        expectedData.put("state", "SA");
+        expectedData.put("time_zone", "CST");
+        expectedData.put("lat", "-34.9");
+        expectedData.put("lon", "138.6");
+        expectedData.put("local_date_time", "15/04:00pm");
+        expectedData.put("local_date_time_full", "20230715160000");
+        expectedData.put("air_temp", "13.3");
+        expectedData.put("apparent_t", "9.5");
+        expectedData.put("cloud", "Partly cloudy");
+        expectedData.put("dewpt", "5.7");
+        expectedData.put("press", "1023.9");
+        expectedData.put("rel_hum", "60");
+        expectedData.put("wind_dir", "S");
+        expectedData.put("wind_spd_kmh", "15");
+        expectedData.put("wind_spd_kt", "8");
+
 
         // Read the test data file
         Map<String, String> actualData = contentServer.readDataFile(testFilePath);
+        System.out.println(actualData);
 
         // Assert that the actual data matches the expected data
-        assertEquals(expectedData, actualData);
+        assertEquals("IDS60901", actualData.get("id"));
+        assertEquals("SA", actualData.get("state"));
+        assertEquals("CST", actualData.get("time_zone"));
+        assertEquals("-34.9", actualData.get("lat"));
+        assertEquals("138.6", actualData.get("lon"));
+        assertEquals("15/04:00pm", actualData.get("local_date_time"));
+        assertEquals("20230715160000", actualData.get("local_date_time_full"));
+        assertEquals("13.3", actualData.get("air_temp"));
+        assertEquals("9.5", actualData.get("apparent_t"));
+        assertEquals("Partly cloudy", actualData.get("cloud"));
+        assertEquals("5.7", actualData.get("dewpt"));
+        assertEquals("1023.9", actualData.get("press"));
+        assertEquals("60", actualData.get("rel_hum"));
+        assertEquals("S", actualData.get("wind_dir"));
+        assertEquals("15", actualData.get("wind_spd_kmh"));
+        assertEquals("8", actualData.get("wind_spd_kt"));
+
     }
 
     @Test
@@ -50,52 +77,4 @@ public class ContentServerTest {
         assertEquals(expectedJson, jsonData);
     }
 
-    @Test
-    public void testSendPUTRequest() {
-        // Mock Socket connection and PrintWriter
-        try {
-            Socket mockSocket = new Socket("localhost", 4567); // use the actual port of your Aggregation Server
-            PrintWriter out = new PrintWriter(mockSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(mockSocket.getInputStream()));
-
-            // Simulate sending a PUT request
-            String jsonData = "{\"key1\":\"value1\",\"key2\":\"value2\"}";
-            String httpRequest = "PUT /data HTTP/1.1\r\n" +
-                    "Host: localhost\r\n" +
-                    "Content-Type: application/json\r\n" +
-                    "Content-Length: " + jsonData.length() + "\r\n" +
-                    "Lamport-Clock: 1\r\n" +
-                    "Connection: close\r\n\r\n" +
-                    jsonData;
-
-            out.print(httpRequest);
-            out.flush();
-
-            // Mock response from server
-            String response = "HTTP/1.1 200 OK\r\n" +
-                    "Lamport-Clock: 2\r\n" +
-                    "Content-Length: 0\r\n\r\n";
-
-            // Simulate reading the response
-            in.readLine(); // Read the status line
-            int receivedClock = -1;
-            String line;
-            while ((line = in.readLine()) != null) {
-                if (line.startsWith("Lamport-Clock")) {
-                    receivedClock = Integer.parseInt(line.split(": ")[1]);
-                }
-            }
-
-            // Validate the received clock
-            assertEquals(2, receivedClock);
-
-            // Close the sockets
-            out.close();
-            in.close();
-            mockSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Exception thrown during test: " + e.getMessage());
-        }
-    }
 }

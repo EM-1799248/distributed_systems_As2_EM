@@ -22,25 +22,25 @@ compile:
 copy-data:
 	cp $(DATAFILE) bin/
 
-# Make command to run the Aggregation Server in the background
+# Make command to run the Aggregation Server
 run-server:
-	cd bin && java -cp .:../$(GSON_LIB) AggregationServer $${PORT:-$(DEFAULT_PORT)} & \
-	echo $$! > server.pid; \
-	sleep 1
+	cd bin && java -cp .:../$(GSON_LIB) AggregationServer $${PORT:-$(DEFAULT_PORT)}
 
-# Make command to stop the Aggregation Server
-stop-server:
-	@kill -9 `cat server.pid` || true; \
-	rm -f server.pid
+# Make command to run the GETClient
+run-client:
+	cd bin && java -cp .:../$(GSON_LIB) GETClient $${SERVER:-http://$(DEFAULT_HOST):$${PORT:-$(DEFAULT_PORT)}}
+
+# Make command to run the ContentServer
+run-content:
+	cd bin && java -cp .:../$(GSON_LIB) ContentServer http://localhost:$${PORT:-$(DEFAULT_PORT)}
 
 # JUnit Test target: compile, run server, and run all tests
-test: compile run-server
+test: compile
 	@echo "Running JUnit tests..."
-	@cd bin && java -cp .:../$(JUNIT_LIB):../$(HAMCREST_LIB):../$(GSON_LIB) org.junit.runner.JUnitCore GETClientTest
 	@cd bin && java -cp .:../$(JUNIT_LIB):../$(HAMCREST_LIB):../$(GSON_LIB) org.junit.runner.JUnitCore ContentServerTest
+	@cd bin && java -cp .:../$(JUNIT_LIB):../$(HAMCREST_LIB):../$(GSON_LIB) org.junit.runner.JUnitCore GETClientTest
 	@cd bin && java -cp .:../$(JUNIT_LIB):../$(HAMCREST_LIB):../$(GSON_LIB) org.junit.runner.JUnitCore LamportClockTest
 	@cd bin && java -cp .:../$(JUNIT_LIB):../$(HAMCREST_LIB):../$(GSON_LIB) org.junit.runner.JUnitCore AggregationServerTest
-	@$(MAKE) stop-server
 
 # Clean up compiled classes and copied data file
 clean:

@@ -97,7 +97,7 @@ public class ContentServer {
         String line;
 
         while ((line = reader.readLine()) != null) {
-            String[] parts = line.split(":");
+            String[] parts = line.split(":",2);
             if (parts.length == 2) {
                 data.put(parts[0], parts[1].trim());
             }

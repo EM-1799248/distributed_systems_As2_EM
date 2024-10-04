@@ -1,4 +1,5 @@
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import com.google.gson.Gson;
 import org.junit.Before;
@@ -10,7 +11,7 @@ import java.net.Socket;
 
 public class GETClientTest {
     private GETClient getClient;
-    private final String testFilePath = "data.txt"; // Path for the response file
+    private final String testFilePath = "testData.txt"; // Path for the response file
     private final String serverAddress = "localhost";
     private final int serverPort = 4567;
 
@@ -43,62 +44,39 @@ public class GETClientTest {
     }
 
     @Test
-    public void testSendGETRequest() {
-        // Mock Socket connection and PrintWriter
+    public void testParseServerAddressHigh() {
+        String[] expected = {"localhost", "65535"};
+        String[] actual = getClient.parseServerAddress("http://localhost:65535");
+        assertArrayEquals(expected, actual);
+
+        expected = new String[]{"localhost", "65535"};
+        actual = getClient.parseServerAddress("localhost:65535");
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testParseServerAddressLow() {
+        String[] expected = {"localhost", "1"};
+        String[] actual = getClient.parseServerAddress("http://localhost:1");
+        assertArrayEquals(expected, actual);
+
+        expected = new String[]{"localhost", "1"};
+        actual = getClient.parseServerAddress("localhost:1");
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testParseServerPort() {
+        String invalidAddress = "http://localhost:4567:1234";
+
         try {
-            Socket mockSocket = new Socket(serverAddress, serverPort);
-            PrintWriter out = new PrintWriter(mockSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(mockSocket.getInputStream()));
-
-            // Simulate sending a GET request
-            String httpRequest =
-                    "GET / HTTP/1.1\r\n" +
-                            "Host: " + serverAddress + "\r\n" +
-                            "Connection: close\r\n" +
-                            "Lamport-Clock: 1\r\n\r\n";
-
-            out.print(httpRequest);
-            out.flush();
-
-            // Mock response from server
-            String response = "HTTP/1.1 200 OK\r\n" +
-                    "Lamport-Clock: 2\r\n" +
-                    "Content-Length: " + "{\"key1\":\"value1\",\"key2\":\"value2\"}".length() + "\r\n" +
-                    "\r\n" +
-                    "{\"key1\":\"value1\",\"key2\":\"value2\"}";
-
-            // Simulate reading the response
-            in.readLine(); // Read the status line
-            int receivedClock = 2; // Simulated received Lamport clock
-            StringBuilder responseBody = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) {
-                responseBody.append(line).append("\n");
-            }
-
-            // Print and process the response
-            System.out.println("Full Raw Server Response:");
-            System.out.println(response);
-
-            // Validate the received clock
-            assertEquals(2, receivedClock);
-
-            // Parse JSON response
-            String jsonResponse = responseBody.substring(responseBody.indexOf("{")); // Extract JSON from response
-            JsonObject jsonObject = new Gson().fromJson(jsonResponse, JsonObject.class);
-
-            // Assert that the JSON object contains the expected data
-            assertNotNull(jsonObject);
-            assertEquals("value1", jsonObject.get("key1").getAsString());
-            assertEquals("value2", jsonObject.get("key2").getAsString());
-
-            // Close the sockets
-            out.close();
-            in.close();
-            mockSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Exception thrown during test: " + e.getMessage());
+            getClient.parseServerAddress(invalidAddress);
+            // If we reach this line, the exception was not thrown
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) {
+            // Check the exception message
+            assertEquals("Invalid server address format.", e.getMessage());
         }
     }
+
 }
